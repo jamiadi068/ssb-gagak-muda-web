@@ -1,0 +1,341 @@
+/* ==========================================================================
+   DESIGN SYSTEM & VARIABLES (ULTRA-ELEGANT EDITION)
+   ========================================================================== */
+:root {
+  /* Radius System */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-full: 9999px;
+
+  /* Modern Amethyst Color Palette */
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-light: #c4b5fd;
+  --accent-glow: rgba(124, 58, 237, 0.25);
+  --accent-bg: rgba(124, 58, 237, 0.04);
+  
+  /* Neutral Elegance Palette (Slate/Zinc Blend) */
+  --bg-main: #f8fafc;
+  --surface-white: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.72);
+  --surface-glass-hover: rgba(255, 255, 255, 0.92);
+  
+  --border-light: rgba(226, 232, 240, 0.8);
+  --border-glass: rgba(255, 255, 255, 0.6);
+  --border-focus: rgba(124, 58, 237, 0.4);
+
+  --text-main: #475569;
+  --text-muted: #94a3b8;
+  --text-h: #0f172a;
+
+  /* Multi-layered Soft Elevation (Shadows) */
+  --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.03), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-card: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.01);
+  --shadow-hover: 0 20px 40px -10px rgba(124, 58, 237, 0.12), 0 8px 16px -4px rgba(15, 23, 42, 0.04);
+  --shadow-floating: 0 30px 60px -12px rgba(15, 23, 42, 0.12);
+
+  /* Precise Easing Animations */
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.4s var(--ease-smooth);
+}
+
+/* ==========================================================================
+   GLOBAL RESET & BASE STYLES
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(167, 139, 250, 0.03) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', Roboto, sans-serif;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   LAYOUT CONTAINERS
+   ========================================================================== */
+.home-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 56px 24px;
+}
+
+/* ==========================================================================
+   HERO SECTION
+   ========================================================================== */
+.hero-section {
+  animation: fadeIn 0.8s var(--ease-smooth);
+}
+
+.hero-gradient-text {
+  background: linear-gradient(135deg, var(--text-h) 30%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  letter-spacing: -0.03em;
+}
+
+/* ==========================================================================
+   BUTTONS (ELEGANT MICRO-INTERACTIONS)
+   ========================================================================== */
+.btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  will-change: transform, box-shadow;
+  transition: var(--transition-smooth);
+  border: none;
+}
+
+/* Primary Button with Shimmer Effect */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.6s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 12px 24px -4px rgba(124, 58, 237, 0.35);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-h);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-white);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--border-light);
+}
+
+/* ==========================================================================
+   CARDS & FLOATING SURFACES
+   ========================================================================== */
+.menu-shortcut-card, .player-card {
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  transition: var(--transition-smooth);
+  will-change: transform, box-shadow;
+  position: relative;
+}
+
+.menu-shortcut-card:hover, .player-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(124, 58, 237, 0.2);
+  background: var(--surface-glass-hover);
+}
+
+/* ==========================================================================
+   REGISTRATION CARD & FORM DESIGN
+   ========================================================================== */
+.registration-card {
+  background: var(--surface-white);
+  border: 1px solid var(--border-light);
+  padding: 48px;
+  border-radius: var(--radius-lg);
+  max-width: 620px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-floating);
+  position: relative;
+  will-change: transform, opacity;
+  animation: slideUp 0.6s var(--ease-smooth) forwards;
+}
+
+.form-group {
+  margin-bottom: 22px;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-main);
+  margin-bottom: 8px;
+  display: block;
+  transition: var(--transition-fast);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  font-size: 15px;
+  color: var(--text-h);
+  transition: var(--transition-fast);
+  outline: none;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Dynamic Focus Effects */
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  background: var(--surface-white);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-bg), 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.form-group:focus-within label {
+  color: var(--accent);
+}
+
+/* ==========================================================================
+   ADMIN HEADER (GLASSMORPHISM STICKY)
+   ========================================================================== */
+.admin-header {
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-light);
+  padding: 16px 40px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: var(--transition-fast);
+}
+
+/* ==========================================================================
+   CLOSE BUTTON (X)
+   ========================================================================== */
+.btn-close-form {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.btn-close-form:hover {
+  background: var(--bg-main);
+  color: var(--accent);
+  border-color: var(--border-light);
+  transform: rotate(90deg);
+}
+
+/* ==========================================================================
+   ANIMATIONS & UTILITIES
+   ========================================================================== */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(12px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Utility: Hide Scrollbar */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 768px) {
+  .home-container {
+    padding: 32px 16px;
+  }
+  
+  .registration-card {
+    padding: 32px 20px;
+    border-radius: var(--radius-md);
+  }
+
+  .admin-header {
+    padding: 16px 20px;
+  }
+}

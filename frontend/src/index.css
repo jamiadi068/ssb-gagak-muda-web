@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   TAILWIND V4 THEME INTEGRATION & DESIGN TOKENS
+   ========================================================================== */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
+  
+  --color-accent: #7c3aed;
+  --color-accent-hover: #6d28d9;
+  --color-accent-light: #ddd6fe;
+  --color-text-main: #475569;
+  --color-text-heading: #0f172a;
+}
+
+:root {
+  /* Color Palette System */
+  --bg-main: #f8fafc;
+  --surface-glass: rgba(255, 255, 255, 0.75);
+  --surface-glass-hover: rgba(255, 255, 255, 0.9);
+  
+  --border-subtle: rgba(226, 232, 240, 0.8);
+  --border-glass: rgba(255, 255, 255, 0.6);
+  --border-accent: rgba(124, 58, 237, 0.25);
+  
+  --accent-glow: rgba(124, 58, 237, 0.12);
+  --accent-soft-bg: rgba(124, 58, 237, 0.05);
+
+  /* Multi-layered Modern Elevations (Shadows) */
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 12px 32px -4px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+  --shadow-lg: 0 20px 40px -10px rgba(124, 58, 237, 0.16), 0 8px 16px -6px rgba(15, 23, 42, 0.03);
+
+  /* Radius Scale */
+  --radius-sm: 10px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-full: 9999px;
+
+  /* Smooth Easing Animations */
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.4s var(--ease-smooth);
+
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  background-color: var(--bg-main);
+  color: var(--color-text-main);
+  scroll-behavior: smooth;
+}
+
+/* ==========================================================================
+   GLOBAL RESET & TYPOGRAPHY ENHANCEMENT
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--color-text-heading);
+  letter-spacing: -0.025em;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+/* ==========================================================================
+   LAYOUT & CONTAINER (AMBIENT GRADIENT BACKGROUND)
+   ========================================================================== */
+#center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 48px 24px;
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(at 0% 0%, var(--accent-glow) 0px, transparent 45%),
+    radial-gradient(at 100% 100%, rgba(167, 139, 250, 0.08) 0px, transparent 45%);
+  background-attachment: fixed;
+}
+
+/* ==========================================================================
+   HIGH-END GLASSMORPHISM PANEL
+   ========================================================================== */
+.glass-panel {
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-md);
+  transition: var(--transition-smooth);
+}
+
+.glass-panel:hover {
+  background: var(--surface-glass-hover);
+  border-color: var(--border-subtle);
+}
+
+/* ==========================================================================
+   INTERACTIVE ELEMENTS & MICRO-INTERACTIONS
+   ========================================================================== */
+.interactive-element {
+  will-change: transform, box-shadow;
+  transition: var(--transition-smooth);
+  cursor: pointer;
+}
+
+.interactive-element:hover {
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-accent);
+}
+
+.interactive-element:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+/* ==========================================================================
+   INFINITE SCROLL ANIMATION (HARDWARE ACCELERATED)
+   ========================================================================== */
+@keyframes scroll {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.animate-scroll {
+  display: flex;
+  width: max-content;
+  animation: scroll 35s linear infinite;
+  will-change: transform;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* ==========================================================================
+   ELEGANT CUSTOM SCROLLBAR
+   ========================================================================== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: var(--radius-full);
+  transition: var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
