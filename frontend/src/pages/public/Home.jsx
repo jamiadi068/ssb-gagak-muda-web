@@ -52,7 +52,7 @@ function Home() {
   // FETCH DATA PEMAIN
   useEffect(() => {
     setLoading(true);
-    fetch("/api/pemain")
+    fetch("https://ssb-gagak-muda-web-slvs.vercel.app/api/pemain")
       .then((res) => res.json())
       .then((data) => {
         const aktif = data.filter(
@@ -70,7 +70,7 @@ function Home() {
   // FETCH DATA PERTANDINGAN
   useEffect(() => {
     setLoadingMatch(true);
-    fetch("/api/pertandingan") 
+    fetch("https://ssb-gagak-muda-web-slvs.vercel.app/api/pertandingan") 
       .then((res) => res.json())
       .then((data) => {
         setPertandingan(data);
