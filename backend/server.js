@@ -15,40 +15,45 @@ const allowedOrigins = [
   "http://localhost:4173",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Izinkan request tanpa origin
-      // contoh: Postman / server-to-server
-      if (!origin) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Izinkan request tanpa origin
+    // contoh: Postman / server-to-server
+    if (!origin) {
+      return callback(null, true);
+    }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      return callback(
-        new Error("Not allowed by CORS")
-      );
-    },
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-      "PATCH",
-      "OPTIONS",
-    ],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-    ],
-    credentials: true,
-  })
-);
+    return callback(
+      new Error("Not allowed by CORS")
+    );
+  },
 
-app.options("*", cors());
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+    "PATCH",
+    "OPTIONS",
+  ],
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+  ],
+
+  credentials: true,
+
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
@@ -93,10 +98,12 @@ app.use("/api/pertandingan", pertandinganRoutes);
 app.use("/api/raport", raportRoutes);
 app.use("/api/ganti-password", gantiPasswordRoutes);
 app.use("/api/akun-siswa", akunSiswaRoutes);
+
 app.use(
   "/api/ganti-password-siswa",
   gantiPasswordSiswaRoutes
 );
+
 app.use("/api/export", exportRoutes);
 
 // ======================
