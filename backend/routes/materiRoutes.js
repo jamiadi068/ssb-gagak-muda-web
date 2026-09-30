@@ -1,93 +1,166 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
+
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
 // ==================================================
-// 📁 FOLDER UPLOAD MATERI
+// 📁 KONFIGURASI UPLOAD
 // ==================================================
 
-const uploadDir = path.join(__dirname, "../uploads/materi");
+const isVercel = !!process.env.VERCEL;
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, {
-    recursive: true,
-  });
+// Local:
+// D:/gagakmuda_rekruitment/backend/uploads/materi
+//
+// Vercel:
+// /tmp/materi
+const uploadDir = isVercel
+  ? "/tmp/materi"
+  : path.join(__dirname, "../uploads/materi");
+
+// Buat folder hanya jika dijalankan secara local
+if (!isVercel) {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, {
+      recursive: true,
+    });
+  }
 }
 
 // ==================================================
-// ⚙️ KONFIGURASI MULTER
+// 📦 STORAGE
 // ==================================================
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    // Pastikan folder /tmp/materi tersedia di Vercel
+    if (isVercel && !fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, {
+        recursive: true,
+      });
+    }
+
     cb(null, uploadDir);
   },
 
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = path.extname(file.originalname);
 
-    const namaFile = path
-      .basename(file.originalname, ext)
-      .replace(/[^a-zA-Z0-9-_]/g, "_");
+    const filename =
+      Date.now() +
+      "-" +
+      Math.round(Math.random() * 1e9) +
+      ext;
 
-    cb(
-      null,
-      `${Date.now()}-${namaFile}${ext}`
-    );
+    cb(null, filename);
   },
 });
 
 // ==================================================
-// 🔐 VALIDASI FILE
-// PDF / JPG / JPEG
+// 🔎 FILTER FILE
 // ==================================================
 
 const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = [
+  const allowedTypes = [
     "application/pdf",
     "image/jpeg",
     "image/jpg",
   ];
 
-  const allowedExtensions = [
-    ".pdf",
-    ".jpg",
-    ".jpeg",
-  ];
-
-  const ext = path
-    .extname(file.originalname)
-    .toLowerCase();
-
-  if (
-    allowedMimeTypes.includes(file.mimetype) &&
-    allowedExtensions.includes(ext)
-  ) {
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
       new Error(
-        "Format file tidak diperbolehkan. Hanya PDF, JPG, dan JPEG."
+        "File hanya boleh PDF, JPG, atau JPEG"
       )
     );
   }
 };
 
 // ==================================================
-// 📦 MULTER
-// Maksimal 10 MB
+// 🚀 MULTER
 // ==================================================
 
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 10 * 1024 * 1024, // 10 MB
   },
 });
+
+// ==================================================
+// 📥 GET ALL MATERI
+// ==================================================
+
+router.get("/", async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        materi.*,
+        pelatih.nama AS nama_pelatih,
+        pelatih.lisensi
+      FROM materi 
+      LEFT JOIN pelatih 
+        ON materi.pelatih_id = pelatih.id
+      ORDER BY materi.id DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(
+      "❌ GET MATERI ERROR:",
+      err
+    );
+
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
+// ==================================================
+// 📥 GET MATERI BERDASARKAN PELATIH
+// ==================================================
+
+router.get(
+  "/pelatih/:pelatihId",
+  async (req, res) => {
+    try {
+      const { pelatihId } = req.params;
+
+      const result = await db.query(
+        `
+        SELECT
+          materi.*,
+          pelatih.nama AS nama_pelatih,
+          pelatih.lisensi
+        FROM materi
+        LEFT JOIN pelatih
+          ON materi.pelatih_id = pelatih.id
+        WHERE materi.pelatih_id = $1
+        ORDER BY materi.id DESC
+        `,
+        [pelatihId]
+      );
+
+      res.json(result.rows);
+    } catch (err) {
+      console.error(
+        "❌ GET MATERI PELATIH ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        error: err.message,
+      });
+    }
+  }
+);
 
 // ==================================================
 // 📥 GET MATERI BERDASARKAN ID
@@ -131,42 +204,12 @@ router.get("/:id", async (req, res) => {
 });
 
 // ==================================================
-// 📥 GET ALL MATERI
-// ==================================================
-
-router.get("/", async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT 
-        materi.*,
-        pelatih.nama AS nama_pelatih,
-        pelatih.lisensi
-      FROM materi
-      LEFT JOIN pelatih 
-        ON materi.pelatih_id = pelatih.id
-      ORDER BY materi.id DESC
-    `);
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error(
-      "❌ GET MATERI ERROR:",
-      err
-    );
-
-    res.status(500).json({
-      error: err.message,
-    });
-  }
-});
-
-// ==================================================
-// 📤 POST MATERI + UPLOAD FILE
+// ➕ TAMBAH MATERI
 // ==================================================
 
 router.post(
   "/",
-  upload.single("file_materi"),
+  upload.single("file"),
   async (req, res) => {
     try {
       const {
@@ -174,45 +217,60 @@ router.post(
         kategori,
         tanggal,
         pelatih_id,
-        durasi,
-        lokasi,
-        deskripsi,
       } = req.body;
 
-      // Validasi field wajib
+      // Validasi data wajib
       if (
         !judul ||
         !kategori ||
         !tanggal ||
         !pelatih_id
       ) {
+        if (req.file) {
+          fs.unlink(
+            req.file.path,
+            () => {}
+          );
+        }
+
         return res.status(400).json({
-          error: "Field wajib belum lengkap",
+          message:
+            "Judul, kategori, tanggal, dan pelatih wajib diisi",
         });
       }
 
       // Cek pelatih
-      const cekPelatih = await db.query(
-        "SELECT id FROM pelatih WHERE id = $1",
-        [pelatih_id]
-      );
+      const pelatihResult =
+        await db.query(
+          `
+          SELECT id
+          FROM pelatih
+          WHERE id = $1
+          `,
+          [pelatih_id]
+        );
 
-      if (cekPelatih.rowCount === 0) {
-        return res.status(400).json({
-          error:
-            "Pelatih tidak valid / tidak ditemukan",
+      if (
+        pelatihResult.rowCount === 0
+      ) {
+        if (req.file) {
+          fs.unlink(
+            req.file.path,
+            () => {}
+          );
+        }
+
+        return res.status(404).json({
+          message:
+            "Pelatih tidak ditemukan",
         });
       }
 
-      // Path file
-      let fileMateri = null;
+      // Nama file
+      const file = req.file
+        ? req.file.filename
+        : null;
 
-      if (req.file) {
-        fileMateri =
-          `/uploads/materi/${req.file.filename}`;
-      }
-
-      // Simpan materi
       const result = await db.query(
         `
         INSERT INTO materi
@@ -220,29 +278,23 @@ router.post(
           judul,
           kategori,
           tanggal,
-          pelatih_id,
-          durasi,
-          lokasi,
-          deskripsi,
-          file_materi
+          file,
+          pelatih_id
         )
         VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8)
+        ($1, $2, $3, $4, $5)
         RETURNING *
         `,
         [
           judul,
           kategori,
           tanggal,
+          file,
           pelatih_id,
-          durasi,
-          lokasi,
-          deskripsi,
-          fileMateri,
         ]
       );
 
-      res.json({
+      res.status(201).json({
         message:
           "Materi berhasil ditambahkan",
         data: result.rows[0],
@@ -253,6 +305,13 @@ router.post(
         err
       );
 
+      if (req.file) {
+        fs.unlink(
+          req.file.path,
+          () => {}
+        );
+      }
+
       res.status(500).json({
         error: err.message,
       });
@@ -261,12 +320,12 @@ router.post(
 );
 
 // ==================================================
-// ✏️ PUT UPDATE MATERI
+// ✏️ UPDATE MATERI
 // ==================================================
 
 router.put(
   "/:id",
-  upload.single("file_materi"),
+  upload.single("file"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -276,54 +335,113 @@ router.put(
         kategori,
         tanggal,
         pelatih_id,
-        durasi,
-        lokasi,
-        deskripsi,
       } = req.body;
 
+      // Validasi
       if (
         !judul ||
         !kategori ||
         !tanggal ||
         !pelatih_id
       ) {
+        if (req.file) {
+          fs.unlink(
+            req.file.path,
+            () => {}
+          );
+        }
+
         return res.status(400).json({
-          error:
-            "Field wajib tidak boleh kosong",
+          message:
+            "Judul, kategori, tanggal, dan pelatih wajib diisi",
+        });
+      }
+
+      // Ambil data materi lama
+      const oldResult =
+        await db.query(
+          `
+          SELECT *
+          FROM materi
+          WHERE id = $1
+          `,
+          [id]
+        );
+
+      if (oldResult.rowCount === 0) {
+        if (req.file) {
+          fs.unlink(
+            req.file.path,
+            () => {}
+          );
+        }
+
+        return res.status(404).json({
+          message:
+            "Materi tidak ditemukan",
         });
       }
 
       // Cek pelatih
-      const cekPelatih = await db.query(
-        "SELECT id FROM pelatih WHERE id = $1",
-        [pelatih_id]
-      );
+      const pelatihResult =
+        await db.query(
+          `
+          SELECT id
+          FROM pelatih
+          WHERE id = $1
+          `,
+          [pelatih_id]
+        );
 
-      if (cekPelatih.rowCount === 0) {
-        return res.status(400).json({
-          error: "Pelatih tidak valid",
-        });
-      }
+      if (
+        pelatihResult.rowCount === 0
+      ) {
+        if (req.file) {
+          fs.unlink(
+            req.file.path,
+            () => {}
+          );
+        }
 
-      // Ambil file lama
-      const materiLama = await db.query(
-        "SELECT file_materi FROM materi WHERE id = $1",
-        [id]
-      );
-
-      if (materiLama.rowCount === 0) {
         return res.status(404).json({
-          message: "Materi tidak ditemukan",
+          message:
+            "Pelatih tidak ditemukan",
         });
       }
 
-      let fileMateri =
-        materiLama.rows[0].file_materi;
+      const oldMateri =
+        oldResult.rows[0];
 
-      // Kalau upload file baru
+      let fileName =
+        oldMateri.file;
+
+      // Jika upload file baru
       if (req.file) {
-        fileMateri =
-          `/uploads/materi/${req.file.filename}`;
+        fileName =
+          req.file.filename;
+
+        // Hapus file lama
+        if (
+          oldMateri.file &&
+          !isVercel
+        ) {
+          const oldFilePath =
+            path.join(
+              uploadDir,
+              oldMateri.file
+            );
+
+          if (
+            fs.existsSync(
+              oldFilePath
+            )
+          ) {
+            fs.unlink(
+              oldFilePath,
+              () => {}
+            );
+          }
+        }
       }
 
       const result = await db.query(
@@ -333,23 +451,17 @@ router.put(
           judul = $1,
           kategori = $2,
           tanggal = $3,
-          pelatih_id = $4,
-          durasi = $5,
-          lokasi = $6,
-          deskripsi = $7,
-          file_materi = $8
-        WHERE id = $9
+          file = $4,
+          pelatih_id = $5
+        WHERE id = $6
         RETURNING *
         `,
         [
           judul,
           kategori,
           tanggal,
+          fileName,
           pelatih_id,
-          durasi,
-          lokasi,
-          deskripsi,
-          fileMateri,
           id,
         ]
       );
@@ -361,9 +473,16 @@ router.put(
       });
     } catch (err) {
       console.error(
-        "❌ UPDATE MATERI ERROR:",
+        "❌ PUT MATERI ERROR:",
         err
       );
+
+      if (req.file) {
+        fs.unlink(
+          req.file.path,
+          () => {}
+        );
+      }
 
       res.status(500).json({
         error: err.message,
@@ -376,89 +495,111 @@ router.put(
 // 🗑️ DELETE MATERI
 // ==================================================
 
-router.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
+router.delete(
+  "/:id",
+  async (req, res) => {
+    try {
+      const { id } = req.params;
 
-    // Ambil file
-    const materi = await db.query(
-      "SELECT file_materi FROM materi WHERE id = $1",
-      [id]
-    );
+      // Ambil data file terlebih dahulu
+      const oldResult =
+        await db.query(
+          `
+          SELECT file
+          FROM materi
+          WHERE id = $1
+          `,
+          [id]
+        );
 
-    if (materi.rowCount === 0) {
-      return res.status(404).json({
-        message: "Materi tidak ditemukan",
-      });
-    }
+      if (oldResult.rowCount === 0) {
+        return res.status(404).json({
+          message:
+            "Materi tidak ditemukan",
+        });
+      }
 
-    const fileMateri =
-      materi.rows[0].file_materi;
+      const fileName =
+        oldResult.rows[0].file;
 
-    // Hapus database
-    await db.query(
-      "DELETE FROM materi WHERE id = $1",
-      [id]
-    );
-
-    // Hapus file fisik
-    if (fileMateri) {
-      const filePath = path.join(
-        __dirname,
-        "..",
-        fileMateri
+      // Hapus dari database
+      await db.query(
+        `
+        DELETE FROM materi
+        WHERE id = $1
+        `,
+        [id]
       );
 
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      // Hapus file fisik
+      if (
+        fileName &&
+        !isVercel
+      ) {
+        const filePath =
+          path.join(
+            uploadDir,
+            fileName
+          );
+
+        if (
+          fs.existsSync(filePath)
+        ) {
+          fs.unlink(
+            filePath,
+            (err) => {
+              if (err) {
+                console.error(
+                  "❌ GAGAL HAPUS FILE:",
+                  err
+                );
+              }
+            }
+          );
+        }
       }
+
+      res.json({
+        message:
+          "Materi berhasil dihapus",
+      });
+    } catch (err) {
+      console.error(
+        "❌ DELETE MATERI ERROR:",
+        err
+      );
+
+      res.status(500).json({
+        error: err.message,
+      });
     }
-
-    res.json({
-      message: "Materi berhasil dihapus",
-    });
-  } catch (err) {
-    console.error(
-      "❌ DELETE MATERI ERROR:",
-      err
-    );
-
-    res.status(500).json({
-      error: err.message,
-    });
   }
-});
+);
 
 // ==================================================
-// ❌ ERROR HANDLER UPLOAD
+// ⚠️ ERROR HANDLER MULTER
 // ==================================================
 
-router.use((err, req, res, next) => {
-  console.error(
-    "❌ UPLOAD ERROR:",
-    err
-  );
-
-  if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
+router.use(
+  (err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
       return res.status(400).json({
-        error:
-          "Ukuran file maksimal 10 MB",
+        message:
+          "Upload file gagal",
+        error: err.message,
       });
     }
 
-    return res.status(400).json({
-      error: err.message,
-    });
-  }
+    if (err) {
+      return res.status(400).json({
+        message:
+          err.message ||
+          "Terjadi kesalahan",
+      });
+    }
 
-  if (err) {
-    return res.status(400).json({
-      error: err.message,
-    });
+    next();
   }
-
-  next();
-});
+);
 
 module.exports = router;
