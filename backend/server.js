@@ -9,7 +9,47 @@ const PORT = 5000;
 // MIDDLEWARE GLOBAL
 // ======================
 
-app.use(cors());
+const allowedOrigins = [
+  "https://ssb-gagak-muda-web.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:4173",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Izinkan request tanpa origin
+      // contoh: Postman / server-to-server
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(
+        new Error("Not allowed by CORS")
+      );
+    },
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "PATCH",
+      "OPTIONS",
+    ],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+    credentials: true,
+  })
+);
+
+app.options("*", cors());
+
 app.use(express.json());
 
 // ======================
@@ -39,7 +79,11 @@ const akunSiswaRoutes = require("./routes/akunSiswa");
 const gantiPasswordSiswaRoutes = require("./routes/gantiPasswordSiswaRoutes");
 const exportRoutes = require("./routes/exportRoutes");
 
-app.use("/api/pelatih-kelompok",pelatihKelompokRoutes);
+app.use(
+  "/api/pelatih-kelompok",
+  pelatihKelompokRoutes
+);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/pendaftaran", pendaftaranRoutes);
 app.use("/api/pemain", pemainRoutes);
@@ -49,7 +93,10 @@ app.use("/api/pertandingan", pertandinganRoutes);
 app.use("/api/raport", raportRoutes);
 app.use("/api/ganti-password", gantiPasswordRoutes);
 app.use("/api/akun-siswa", akunSiswaRoutes);
-app.use("/api/ganti-password-siswa",gantiPasswordSiswaRoutes);
+app.use(
+  "/api/ganti-password-siswa",
+  gantiPasswordSiswaRoutes
+);
 app.use("/api/export", exportRoutes);
 
 // ======================
@@ -57,7 +104,9 @@ app.use("/api/export", exportRoutes);
 // ======================
 
 app.get("/", (req, res) => {
-  res.send("Backend Gagak Muda Academy Running 🚀");
+  res.send(
+    "Backend Gagak Muda Academy Running 🚀"
+  );
 });
 
 // ======================
@@ -66,7 +115,9 @@ app.get("/", (req, res) => {
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`🚀 Server running smoothly on port ${PORT}`);
+    console.log(
+      `🚀 Server running smoothly on port ${PORT}`
+    );
   });
 }
 
