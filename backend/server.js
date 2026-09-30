@@ -64,6 +64,10 @@ app.get("/", (req, res) => {
 // START SERVER
 // ======================
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running smoothly on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running smoothly on port ${PORT}`);
+  });
+}
+
+module.exports = app;
