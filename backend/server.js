@@ -1,9 +1,10 @@
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // ======================
 // MIDDLEWARE GLOBAL
@@ -17,8 +18,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Izinkan request tanpa origin
-    // contoh: Postman / server-to-server
+    // Izinkan request tanpa origin, misalnya server-to-server
     if (!origin) {
       return callback(null, true);
     }
@@ -27,9 +27,8 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    return callback(
-      new Error("Not allowed by CORS")
-    );
+    console.error("CORS blocked origin:", origin);
+    return callback(new Error("Not allowed by CORS"));
   },
 
   methods: [
@@ -47,15 +46,17 @@ const corsOptions = {
   ],
 
   credentials: true,
-
   optionsSuccessStatus: 204,
 };
 
+// CORS harus dipasang sebelum semua routes
 app.use(cors(corsOptions));
 
-
+// Tangani preflight OPTIONS
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // ======================
 // STATIC FILES
@@ -63,7 +64,7 @@ app.use(express.json());
 
 const uploadPath = path.join(__dirname, "uploads");
 
-console.log("📁 Upload Folder:", uploadPath);
+console.log("Upload Folder:", uploadPath);
 
 app.use("/uploads", express.static(uploadPath));
 
@@ -84,11 +85,7 @@ const akunSiswaRoutes = require("./routes/akunSiswa");
 const gantiPasswordSiswaRoutes = require("./routes/gantiPasswordSiswaRoutes");
 const exportRoutes = require("./routes/exportRoutes");
 
-app.use(
-  "/api/pelatih-kelompok",
-  pelatihKelompokRoutes
-);
-
+app.use("/api/pelatih-kelompok", pelatihKelompokRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/pendaftaran", pendaftaranRoutes);
 app.use("/api/pemain", pemainRoutes);
@@ -98,12 +95,7 @@ app.use("/api/pertandingan", pertandinganRoutes);
 app.use("/api/raport", raportRoutes);
 app.use("/api/ganti-password", gantiPasswordRoutes);
 app.use("/api/akun-siswa", akunSiswaRoutes);
-
-app.use(
-  "/api/ganti-password-siswa",
-  gantiPasswordSiswaRoutes
-);
-
+app.use("/api/ganti-password-siswa", gantiPasswordSiswaRoutes);
 app.use("/api/export", exportRoutes);
 
 // ======================
@@ -111,9 +103,50 @@ app.use("/api/export", exportRoutes);
 // ======================
 
 app.get("/", (req, res) => {
-  res.send(
-    "Backend Gagak Muda Academy Running 🚀"
-  );
+  res.status(200).json({
+    success: true,
+    message: "Backend Gagak Muda Academy Running",
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+
+// ======================
+// 404 HANDLER
+// ======================
+
+app.use((req, res) => {
+  console.error("API route not found:", req.method, req.originalUrl);
+
+  res.status(404).json({
+    success: false,
+    message: "Endpoint tidak ditemukan",
+    method: req.method,
+    path: req.originalUrl,
+  });
+});
+
+// ======================
+// ERROR HANDLER
+// ======================
+
+app.use((err, req, res, next) => {
+  console.error("Backend error:", err.message);
+
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "Origin tidak diizinkan oleh CORS",
+    });
+  }
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(500).json({
+    success: false,
+    message: "Terjadi kesalahan pada server",
+  });
 });
 
 // ======================
@@ -122,9 +155,7 @@ app.get("/", (req, res) => {
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(
-      `🚀 Server running smoothly on port ${PORT}`
-    );
+    console.log(`Backend berjalan di port ${PORT}`);
   });
 }
 

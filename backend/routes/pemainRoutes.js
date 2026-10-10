@@ -98,14 +98,19 @@ router.get("/pelatih/:pelatihId", async (req, res) => {
 
 // ======================
 // GET DETAIL PEMAIN
+// DENGAN NAMA PELATIH
 // ======================
 router.get("/:id", async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT *
-      FROM pemain
-      WHERE id = $1
+      SELECT
+        p.*,
+        pelatih.nama AS nama_pelatih
+      FROM pemain p
+      LEFT JOIN pelatih
+        ON p.pelatih_id = pelatih.id
+      WHERE p.id = $1
       `,
       [req.params.id]
     );

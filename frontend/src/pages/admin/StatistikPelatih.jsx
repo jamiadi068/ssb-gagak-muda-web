@@ -128,38 +128,18 @@ function StatistikPelatih() {
 
       // ==================================================
       // MATERI
+      // KHUSUS MATERI MILIK PELATIH YANG LOGIN
       // ==================================================
       try {
         const materiRes = await axios.get(
-          "/api/materi"
+          `/api/materi/pelatih/${parsedUser.id}`
         );
 
-        const normalize = (value) =>
-          String(value || "")
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, " ");
-
-        const namaPelatih = normalize(
-          parsedUser.nama
+        setMateri(
+          Array.isArray(materiRes.data)
+            ? materiRes.data
+            : []
         );
-
-        const materiSaya = Array.isArray(
-          materiRes.data
-        )
-          ? materiRes.data.filter((item) => {
-              const namaDb = normalize(
-                item.nama_pelatih
-              );
-
-              return (
-                namaDb === namaPelatih ||
-                namaPelatih.includes(namaDb)
-              );
-            })
-          : [];
-
-        setMateri(materiSaya);
       } catch (materiError) {
         console.error(
           "GAGAL FETCH MATERI:",
